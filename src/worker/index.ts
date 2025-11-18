@@ -50,6 +50,64 @@ app.get('/api/condominios/:id', async (c) => {
   return c.json(condominio);
 });
 
+app.post('/api/condominios', async (c) => {
+  const data = await c.req.json();
+  const db = c.env.DB;
+  
+  const result = await db.prepare(`
+    INSERT INTO condominios (nome, cnpj, tipo, endereco, area_total_m2, ativo)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).bind(
+    data.nome,
+    data.cnpj || null,
+    data.tipo,
+    data.endereco || null,
+    data.area_total_m2,
+    true
+  ).run();
+  
+  const novoCondominio = await db.prepare(
+    'SELECT * FROM condominios WHERE id = ?'
+  ).bind(result.meta.last_row_id).first();
+  
+  return c.json(novoCondominio);
+});
+
+app.put('/api/condominios/:id', async (c) => {
+  const id = c.req.param('id');
+  const data = await c.req.json();
+  const db = c.env.DB;
+  
+  await db.prepare(`
+    UPDATE condominios 
+    SET nome = ?, cnpj = ?, tipo = ?, endereco = ?, area_total_m2 = ?
+    WHERE id = ?
+  `).bind(
+    data.nome,
+    data.cnpj || null,
+    data.tipo,
+    data.endereco || null,
+    data.area_total_m2,
+    id
+  ).run();
+  
+  const condominioAtualizado = await db.prepare(
+    'SELECT * FROM condominios WHERE id = ?'
+  ).bind(id).first();
+  
+  return c.json(condominioAtualizado);
+});
+
+app.delete('/api/condominios/:id', async (c) => {
+  const id = c.req.param('id');
+  const db = c.env.DB;
+  
+  // Soft delete
+  await db.prepare('UPDATE condominios SET ativo = 0 WHERE id = ?').bind(id).run();
+  
+  return c.json({ success: true });
+});
+
 // API para Unidades
 app.get('/api/condominios/:id/unidades', async (c) => {
   const condominioId = c.req.param('id');
