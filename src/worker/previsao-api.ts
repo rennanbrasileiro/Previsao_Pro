@@ -400,10 +400,7 @@ function _PLACEHOLDER_gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): str
 function _PLACEHOLDER_gerarDocumentoFatura(dados: PrevisaoConsolidada): string {
   // Função removida - usar gerarDocumentoFatura de document-templates.ts
   return '<html><body>Função removida - usar document-templates.ts</body></html>';
-  const dataVencimento = `10/${String(competencia.mes).padStart(2, '0')}/${competencia.ano}`;
-  const valorPorExtenso = converterValorParaExtenso(centroCusto.valorTotal);
-  
-  return `
+}
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
