@@ -404,15 +404,12 @@ function _PLACEHOLDER_gerarDocumentoFatura(dados: PrevisaoConsolidada): string {
 
 // Função auxiliar para converter valor para extenso (simplificada)
 function converterValorParaExtenso(valor: number): string {
-    <style>
-        @page { size: A4; margin: 2cm; }
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 30px;
-            line-height: 1.6;
-            font-size: 11pt;
-            color: #000;
+  // Implementação simplificada - em produção usar biblioteca especializada
+  const parteInteira = Math.floor(valor);
+  const parteDecimal = Math.round((valor - parteInteira) * 100);
+  
+  // Apenas uma implementação básica para o exemplo
+  return `${parteInteira.toLocaleString('pt-BR')} reais e ${parteDecimal.toString().padStart(2, '0')} centavos`;
         }
         .header {
             text-align: center;
