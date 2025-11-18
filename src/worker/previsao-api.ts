@@ -401,12 +401,9 @@ function _PLACEHOLDER_gerarDocumentoFatura(dados: PrevisaoConsolidada): string {
   // Função removida - usar gerarDocumentoFatura de document-templates.ts
   return '<html><body>Função removida - usar document-templates.ts</body></html>';
 }
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fatura de Condomínio - ${centroCusto.centro.nome} - ${getCompetenciaText(competencia.mes, competencia.ano)}</title>
+
+// Função auxiliar para converter valor para extenso (simplificada)
+function converterValorParaExtenso(valor: number): string {
     <style>
         @page { size: A4; margin: 2cm; }
         body { 
