@@ -410,14 +410,9 @@ function converterValorParaExtenso(valor: number): string {
   
   // Apenas uma implementação básica para o exemplo
   return `${parteInteira.toLocaleString('pt-BR')} reais e ${parteDecimal.toString().padStart(2, '0')} centavos`;
-        }
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #000;
-            padding-bottom: 20px;
-        }
-        .logo {
+}
+
+function gerarDocumentoBalancete(dados: PrevisaoConsolidada): string {
             font-size: 22pt;
             font-weight: bold;
             color: #1a5490;
