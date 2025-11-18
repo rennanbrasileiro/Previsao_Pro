@@ -9,6 +9,7 @@ import {
 import previsaoApp from "./previsao-api";
 import dashboardApp from "./dashboard-api";
 import pagamentosApp from "./pagamentos-api";
+import alertasApp from "./alertas-api";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -22,6 +23,9 @@ app.route('/api/dashboard', dashboardApp);
 
 // Montar rotas de pagamentos
 app.route('/api/pagamentos', pagamentosApp);
+
+// Montar rotas de alertas
+app.route('/api/alertas', alertasApp);
 
 // API para Condomínios
 app.get('/api/condominios', async (c) => {
