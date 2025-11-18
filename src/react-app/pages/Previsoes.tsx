@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, FileText, Download, Plus, Lock } from 'lucide-react';
 import PrevisaoForm from '../components/PrevisaoForm';
+import DocumentGenerator from '../components/DocumentGenerator';
 import { 
   Competencia, 
   PrevisaoItem, 
