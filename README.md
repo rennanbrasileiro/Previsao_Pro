@@ -2,6 +2,28 @@
 
 Sistema profissional para gestão de previsões de custos, balancetes e pagamentos condominiais, com comparação projetado x executado em tempo real.
 
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue)](https://www.typescriptlang.org/)
+[![React](https://img.shields.io/badge/React-19.x-61dafb)](https://react.dev/)
+[![License](https://img.shields.io/badge/License-Proprietary-red)]()
+
+## 📚 Documentação
+
+- 📘 **[Documentação Técnica Completa](DOCUMENTATION.md)** - Arquitetura, APIs, Componentes
+- 🤝 **[Guia de Contribuição](CONTRIBUTING.md)** - Como contribuir com o projeto
+- 🚀 **[Guia de Deploy](docs/DEPLOY.md)** - Instruções de deployment
+- 🔧 **[API Reference](docs/API.md)** - Referência completa de APIs
+
+## 📑 Índice
+
+- [Funcionalidades](#-funcionalidades-principais)
+- [Screenshots](#-screenshots)
+- [Instalação](#-instalação-e-configuração)
+- [Como Usar](#-como-usar)
+- [Tecnologias](#-tecnologias-utilizadas)
+- [Arquitetura](#-arquitetura)
+- [Contribuindo](#-contribuindo)
+- [Licença](#-licença)
+
 ## ✨ Funcionalidades Principais
 
 ### 📊 Dashboard Inteligente
