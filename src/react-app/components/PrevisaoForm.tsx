@@ -7,6 +7,7 @@ import {
   formatCurrencyBR,
   formatNumberBR 
 } from '../../shared/previsao-types';
+import RealtimeCalculator from './RealtimeCalculator';
 
 interface PrevisaoFormProps {
   competencia: Competencia;
