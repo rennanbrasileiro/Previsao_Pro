@@ -395,14 +395,7 @@ function _PLACEHOLDER_OLD_FUNCTION(dados: PrevisaoConsolidada): string {
 function _PLACEHOLDER_gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): string {
   // Função removida - usar gerarDocumentoCentroCusto de document-templates.ts
   return '<html><body>Função removida - usar document-templates.ts</body></html>';
-  
-  return `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsão de Despesas ${centroCusto.centro.nome} - ${getCompetenciaText(competencia.mes, competencia.ano)}</title>
+}
     <style>
         @page { size: A4; margin: 2cm; }
         body { 
