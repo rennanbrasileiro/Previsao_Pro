@@ -112,6 +112,74 @@ export const AuditoriaSchema = z.object({
 
 export type Auditoria = z.infer<typeof AuditoriaSchema>;
 
+// Schema para Pagamentos Efetivados
+export const PagamentoEfetuadoSchema = z.object({
+  id: z.number(),
+  competencia_id: z.number(),
+  centro_custo_id: z.number().nullable(),
+  tipo_referencia: z.enum(['previsao_item', 'despesa_extra', 'taxa_geral']),
+  referencia_id: z.number().nullable(),
+  descricao: z.string(),
+  categoria: z.string(),
+  valor_previsto: z.number(),
+  valor_pago: z.number().nullable(),
+  data_vencimento: z.string().nullable(),
+  data_pagamento: z.string().nullable(),
+  status: z.enum(['pendente', 'pago', 'atrasado', 'cancelado']),
+  forma_pagamento: z.string().nullable(),
+  comprovante_url: z.string().nullable(),
+  observacoes: z.string().nullable(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type PagamentoEfetuado = z.infer<typeof PagamentoEfetuadoSchema>;
+
+// Schema para Despesas Extras
+export const DespesaExtraSchema = z.object({
+  id: z.number(),
+  competencia_id: z.number(),
+  centro_custo_id: z.number().nullable(),
+  categoria: z.string(),
+  descricao: z.string(),
+  valor: z.number(),
+  tipo: z.enum(['extraordinaria', 'nao_prevista', 'variacao']),
+  data_ocorrencia: z.string().nullable(),
+  justificativa: z.string().nullable(),
+  aprovado: z.boolean(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+
+export type DespesaExtra = z.infer<typeof DespesaExtraSchema>;
+
+// Schema para Comparação Projetado x Executado
+export const ComparacaoProjetadoExecutadoSchema = z.object({
+  categoria: z.string(),
+  total_previsto: z.number(),
+  total_executado: z.number(),
+  diferenca: z.number(),
+  percentual_variacao: z.number(),
+  status: z.enum(['dentro', 'acima', 'abaixo']),
+});
+
+export type ComparacaoProjetadoExecutado = z.infer<typeof ComparacaoProjetadoExecutadoSchema>;
+
+// Schema para Alertas
+export const AlertaSchema = z.object({
+  id: z.number(),
+  competencia_id: z.number(),
+  tipo: z.enum(['variacao_alta', 'atraso_pagamento', 'despesa_extra', 'meta_atingida']),
+  severidade: z.enum(['baixa', 'media', 'alta', 'critica']),
+  titulo: z.string(),
+  descricao: z.string(),
+  valor_relacionado: z.number().nullable(),
+  lido: z.boolean(),
+  created_at: z.string(),
+});
+
+export type Alerta = z.infer<typeof AlertaSchema>;
+
 // Categorias fixas para previsão
 export const CATEGORIAS_PREVISAO = [
   'Despesas de Pessoal',
