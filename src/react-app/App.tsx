@@ -3,6 +3,7 @@ import Layout from "@/react-app/components/Layout";
 import Dashboard from "@/react-app/pages/Dashboard";
 import Balancetes from "@/react-app/pages/Balancetes";
 import Previsoes from "@/react-app/pages/Previsoes";
+import Pagamentos from "@/react-app/pages/Pagamentos";
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/previsoes" element={<Previsoes />} />
           <Route path="/balancetes" element={<Balancetes />} />
+          <Route path="/pagamentos" element={<Pagamentos />} />
           <Route path="/condominios" element={<Dashboard />} />
           <Route path="/relatorios" element={<Dashboard />} />
           <Route path="/configuracoes" element={<Dashboard />} />
