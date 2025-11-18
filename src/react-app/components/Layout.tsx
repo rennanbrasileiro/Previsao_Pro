@@ -1,5 +1,7 @@
 import { Building2, BarChart3, FileText, Settings, Download, DollarSign } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
+import { useState } from 'react';
+import AlertsWidget from './AlertsWidget';
 
 interface LayoutProps {
   children: React.ReactNode;
