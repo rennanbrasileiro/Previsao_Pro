@@ -385,76 +385,172 @@ function gerarDocumentoCondominio(dados: PrevisaoConsolidada): string {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Previsão de Despesas Condomínio - ${getCompetenciaText(competencia.mes, competencia.ano)}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .categoria { margin-bottom: 30px; }
-        .categoria h3 { background-color: #f8f9fa; padding: 10px; margin: 0; border-left: 4px solid #007bff; }
-        .item { margin: 8px 0; padding: 8px; background-color: #f8f9fa; display: flex; justify-content: space-between; }
-        .total { font-weight: bold; text-align: right; margin: 10px 0; font-size: 1.1em; background-color: #e9ecef; padding: 10px; }
-        .resumo { background-color: #e9ecef; padding: 20px; margin: 20px 0; }
-        .rateio { margin-top: 20px; }
-        .rateio table { width: 100%; border-collapse: collapse; }
-        .rateio th, .rateio td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .rateio th { background-color: #f8f9fa; }
-        .valor { text-align: right; }
+        @page { size: A4; margin: 2cm; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            line-height: 1.4;
+            font-size: 11pt;
+            color: #000;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+        }
+        .logo {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #1a5490;
+            margin-bottom: 5px;
+        }
+        .endereco {
+            font-size: 9pt;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .titulo-principal {
+            font-size: 14pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 15px 0;
+        }
+        .secao {
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        .secao-titulo {
+            font-size: 11pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 15px 0 10px 0;
+        }
+        .item-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        .item-descricao {
+            flex: 1;
+            padding-right: 10px;
+        }
+        .item-valor {
+            text-align: right;
+            min-width: 120px;
+            font-weight: 500;
+        }
+        .total-secao {
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #f0f0f0;
+            text-align: right;
+            border: 1px solid #ccc;
+        }
+        .calculo-pagamento {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 2px solid #333;
+        }
+        .calculo-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 11pt;
+        }
+        .calculo-linha.destaque {
+            font-weight: bold;
+            font-size: 12pt;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 10px 0;
+            margin-top: 10px;
+        }
+        .divisao-proporcional {
+            margin-top: 25px;
+        }
+        .divisao-proporcional table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid #000;
+        }
+        .divisao-proporcional th,
+        .divisao-proporcional td {
+            padding: 8px;
+            text-align: left;
+            border: 1px solid #000;
+        }
+        .divisao-proporcional th {
+            background-color: #e0e0e0;
+            font-weight: bold;
+        }
+        .divisao-proporcional td.valor {
+            text-align: right;
+        }
+        .nota-explicativa {
+            font-size: 9pt;
+            font-style: italic;
+            color: #555;
+            margin-left: 20px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>PREVISÃO DE DESPESAS CONDOMÍNIO</h1>
-        <h2>${getCompetenciaText(competencia.mes, competencia.ano)}</h2>
-        <p><strong>${dados.condominio.nome}</strong></p>
-        ${dados.condominio.endereco ? `<p>${dados.condominio.endereco}</p>` : ''}
-        ${dados.condominio.cnpj ? `<p>CNPJ: ${dados.condominio.cnpj}</p>` : ''}
+        <div class="logo">SOUZA MELO TOWER</div>
+        <div class="endereco">CONDOMÍNIO DO EDIFÍCIO SOUZA MELO TOWER / ${dados.condominio.endereco || 'Av. Eng. Domingos Ferreira, 1967 - Boa Viagem - Recife-PE'}</div>
+        <div class="titulo-principal">PREVISÃO DE DESPESAS CONDOMÍNIO</div>
     </div>
 
     ${CATEGORIAS_PREVISAO.map(categoria => {
       const itensCategoria = itens?.filter(item => item.categoria === categoria) || [];
       return `
-        <div class="categoria">
-            <h3>${categoria}</h3>
+        <div class="secao">
+            <div class="secao-titulo">${categoria.toUpperCase()}</div>
             ${itensCategoria.map(item => `
-                <div class="item">
-                    <span>${item.descricao}</span>
-                    <span class="valor">${formatCurrencyBR(item.valor)}</span>
+                <div class="item-linha">
+                    <div class="item-descricao">${item.descricao}</div>
+                    <div class="item-valor">${formatCurrencyBR(item.valor)}</div>
                 </div>
             `).join('')}
-            <div class="total">TOTAL ${categoria.toUpperCase()}: ${formatCurrencyBR(totaisPorCategoria[categoria] || 0)}</div>
+            <div class="total-secao">TOTAL: ${formatCurrencyBR(totaisPorCategoria[categoria] || 0)}</div>
         </div>
       `;
     }).join('')}
 
-    <div class="resumo">
-        <div class="total">SOMATÓRIO DE TODAS AS DESPESAS: ${formatCurrencyBR(somatorioDespesas)}</div>
-        <div class="total">ACRÉSCIMO ${competencia.acrescimo_percentual}%: ${formatCurrencyBR(acrescimo)}</div>
-        <div class="total">Taxa Geral (${formatNumberBR(competencia.area_total_m2)} m²) = ${formatCurrencyBR(dados.taxaGeral)}/m²</div>
-        <div class="total" style="font-size: 1.3em; background-color: #007bff; color: white;">SOMATÓRIO DA TAXA GERAL: ${formatCurrencyBR(somatarioTaxaGeral)}</div>
+    <div class="calculo-pagamento">
+        <div class="secao-titulo">CÁLCULO PARA PAGAMENTO</div>
+        <div class="calculo-linha">
+            <span>SOMATÓRIO DE TODAS AS DESPESAS:</span>
+            <span>${formatCurrencyBR(somatorioDespesas)}</span>
+        </div>
+        <div class="calculo-linha">
+            <span>ACRÉSCIMO ${formatNumberBR(competencia.acrescimo_percentual)}%:</span>
+            <span>${formatCurrencyBR(acrescimo)}</span>
+        </div>
+        <div class="calculo-linha">
+            <span>TAXA DE CONDOMÍNIO GERAL (${formatNumberBR(competencia.area_total_m2)}m²):</span>
+            <span>R$ ${formatNumberBR(dados.taxaGeral)}</span>
+        </div>
+        <div class="calculo-linha destaque">
+            <span>SOMATÓRIO DA TAXA DE CONDOMÍNIO GERAL:</span>
+            <span>${formatCurrencyBR(somatarioTaxaGeral)}</span>
+        </div>
     </div>
 
-    <div class="rateio">
-        <h3>Divisão Proporcional por Centro de Custo</h3>
+    <div class="divisao-proporcional">
+        <div class="secao-titulo">DIVISÃO PROPORCIONAL PARA PAGAMENTO</div>
         <table>
-            <thead>
+            ${rateioUnidades.map(item => `
                 <tr>
-                    <th>Centro de Custo</th>
-                    <th>Área (m²)</th>
-                    <th>Valor Proporcional</th>
+                    <td>${item.nome} (${formatNumberBR(item.area_m2)}m²)</td>
+                    <td class="valor">${formatCurrencyBR(item.valor)}</td>
                 </tr>
-            </thead>
-            <tbody>
-                ${rateioUnidades.map(item => `
-                    <tr>
-                        <td>${item.nome}</td>
-                        <td class="valor">${formatNumberBR(item.area_m2)}</td>
-                        <td class="valor">${formatCurrencyBR(item.valor)}</td>
-                    </tr>
-                `).join('')}
-                <tr style="font-weight: bold; background-color: #f8f9fa;">
-                    <td>TOTAL</td>
-                    <td class="valor">${formatNumberBR(competencia.area_total_m2)}</td>
-                    <td class="valor">${formatCurrencyBR(somatarioTaxaGeral)}</td>
-                </tr>
-            </tbody>
+            `).join('')}
         </table>
     </div>
 </body>
