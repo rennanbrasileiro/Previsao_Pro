@@ -378,16 +378,16 @@ previsaoApp.get('/download', async (c) => {
   }
 });
 
-// Função auxiliar para converter valor para extenso (simplificada)
-function converterValorParaExtenso(valor: number): string {
-  const parteInteira = Math.floor(valor);
-  const parteDecimal = Math.round((valor - parteInteira) * 100);
-  return `${parteInteira.toLocaleString('pt-BR')} reais e ${parteDecimal.toString().padStart(2, '0')} centavos`;
-}
+// Funções antigas de geração de documentos removidas
+// Agora usando document-templates.ts para templates melhorados
+/* FUNÇÕES ANTIGAS REMOVIDAS:
+ * - gerarDocumentoCondominio
+ * - gerarDocumentoCentroCusto  
+ * - gerarDocumentoFatura
+ * Agora importadas de document-templates.ts
+ */
 
-// Funções antigas removidas - agora usando document-templates.ts
-// function gerarDocumentoCondominio REMOVIDO
-function _OLD_gerarDocumentoCondominio(dados: PrevisaoConsolidada): string {
+function _PLACEHOLDER_OLD_FUNCTION(dados: PrevisaoConsolidada): string {
   const { competencia, itens, totaisPorCategoria, somatorioDespesas, acrescimo, somatarioTaxaGeral, rateioUnidades } = dados;
   
   return `
