@@ -1,4 +1,4 @@
-import { Building2, BarChart3, FileText, Settings, Download } from 'lucide-react';
+import { Building2, BarChart3, FileText, Settings, Download, DollarSign } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
 
 interface LayoutProps {
@@ -11,6 +11,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: 'Dashboard', href: '/', icon: BarChart3 },
     { name: 'Previsões', href: '/previsoes', icon: FileText },
+    { name: 'Pagamentos', href: '/pagamentos', icon: DollarSign },
     { name: 'Balancetes', href: '/balancetes', icon: Download },
     { name: 'Condomínios', href: '/condominios', icon: Building2 },
     { name: 'Configurações', href: '/configuracoes', icon: Settings },
