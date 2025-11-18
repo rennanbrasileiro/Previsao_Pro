@@ -230,22 +230,36 @@ export default function Previsoes() {
         </div>
       )}
 
-      {/* Ações e Downloads */}
-      {competencia && previsaoConsolidada && (
-        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-slate-900">Documentos e Relatórios</h2>
-            {competencia.status === 'rascunho' && (
-              <button
-                onClick={handleFecharCompetencia}
-                className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-              >
-                <Lock className="w-4 h-4" />
-                <span>Fechar Competência</span>
-              </button>
-            )}
+      {/* Ações e Fechamento da Competência */}
+      {competencia && competencia.status === 'rascunho' && (
+        <div className="bg-gradient-to-r from-red-50 to-orange-50 backdrop-blur-sm rounded-2xl shadow-lg border-2 border-red-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-bold text-red-900 mb-1">Competência em Rascunho</h3>
+              <p className="text-sm text-red-700">Esta competência ainda não foi fechada. Feche para bloquear edições.</p>
+            </div>
+            <button
+              onClick={handleFecharCompetencia}
+              className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all shadow-lg font-semibold"
+            >
+              <Lock className="w-5 h-5" />
+              <span>Fechar Competência</span>
+            </button>
           </div>
+        </div>
+      )}
 
+      {/* Gerador de Documentos */}
+      {selectedCompetencia && centrosCusto && (
+        <DocumentGenerator 
+          competenciaId={selectedCompetencia}
+          centrosCusto={centrosCusto}
+        />
+      )}
+
+      {/* Seção antiga removida - substituída pelo DocumentGenerator */}
+      {false && competencia && previsaoConsolidada && (
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Documento A - Previsão Condomínio */}
             <div className="p-4 bg-blue-50 rounded-xl">
