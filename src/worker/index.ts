@@ -34,7 +34,7 @@ app.route('/api/relatorios', relatoriosApp);
 // API para Condomínios
 app.get('/api/condominios', async (c) => {
   const db = c.env.DB;
-  const condominios = await db.prepare('SELECT * FROM condominios WHERE ativo = 1').all();
+  const condominios = await db.prepare('SELECT * FROM condominios WHERE ativo = 1 ORDER BY nome').all();
   return c.json(condominios.results);
 });
 
