@@ -64,6 +64,22 @@ app.get('/api/categorias', async (c) => {
   return c.json(categorias.results);
 });
 
+// API para Centros de Custo
+app.get('/api/centros-custo', async (c) => {
+  const condominioId = c.req.query('condominioId');
+  const db = c.env.DB;
+  
+  if (!condominioId) {
+    return c.json({ error: 'condominioId é obrigatório' }, 400);
+  }
+  
+  const centros = await db.prepare(
+    'SELECT * FROM centros_custo WHERE condominio_id = ? AND ativo = 1 ORDER BY nome'
+  ).bind(condominioId).all();
+  
+  return c.json(centros.results);
+});
+
 // API para Itens de Despesa
 app.get('/api/itens', async (c) => {
   const categoriaId = c.req.query('categoriaId');
