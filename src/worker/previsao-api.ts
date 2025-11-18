@@ -413,16 +413,7 @@ function converterValorParaExtenso(valor: number): string {
 }
 
 function gerarDocumentoBalancete(dados: PrevisaoConsolidada): string {
-            font-size: 22pt;
-            font-weight: bold;
-            color: #1a5490;
-            margin-bottom: 10px;
-        }
-        .titulo-fatura {
-            font-size: 16pt;
-            font-weight: bold;
-            margin: 20px 0;
-        }
+  const { competencia, totaisPorCategoria, centrosCusto } = dados;
         .info-fatura {
             border: 2px solid #000;
             padding: 15px;
