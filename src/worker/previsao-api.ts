@@ -11,6 +11,11 @@ import {
   formatNumberBR,
   calcularRateio
 } from "../shared/previsao-types";
+import { 
+  gerarDocumentoCondominio, 
+  gerarDocumentoCentroCusto, 
+  gerarDocumentoFatura 
+} from "./document-templates";
 
 const previsaoApp = new Hono<{ Bindings: Env }>();
 
