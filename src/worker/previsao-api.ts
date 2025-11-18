@@ -398,16 +398,8 @@ function _PLACEHOLDER_gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): str
 }
 
 function _PLACEHOLDER_gerarDocumentoFatura(dados: PrevisaoConsolidada): string {
-  const { competencia } = dados;
-  
-  // Pegar o primeiro centro de custo ou SUDENE especificamente
-  let centroCusto = dados.centrosCusto.find(c => c.centro.nome === 'SUDENE');
-  if (!centroCusto && dados.centrosCusto.length > 0) {
-    centroCusto = dados.centrosCusto[0];
-  }
-  if (!centroCusto) return '<html><body>Nenhum centro de custo encontrado</body></html>';
-  
-  // Calcular data de vencimento (dia 10 do mês da competência)
+  // Função removida - usar gerarDocumentoFatura de document-templates.ts
+  return '<html><body>Função removida - usar document-templates.ts</body></html>';
   const dataVencimento = `10/${String(competencia.mes).padStart(2, '0')}/${competencia.ano}`;
   const valorPorExtenso = converterValorParaExtenso(centroCusto.valorTotal);
   
