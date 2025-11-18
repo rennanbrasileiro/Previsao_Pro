@@ -1,5 +1,7 @@
 import { Building2, BarChart3, FileText, Settings, Download, DollarSign } from 'lucide-react';
 import { Link, useLocation } from 'react-router';
+import { useState } from 'react';
+import AlertsWidget from './AlertsWidget';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -31,8 +33,11 @@ export default function Layout({ children }: LayoutProps) {
                 PrevisãoPro
               </h1>
             </div>
-            <div className="text-sm text-slate-600">
-              Sistema Completo de Previsão de Custos Condominiais e Balancetes
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-slate-600">
+                Sistema Completo de Previsão de Custos Condominiais e Balancetes
+              </div>
+              <AlertsWidget competenciaId={1} />
             </div>
           </div>
         </div>

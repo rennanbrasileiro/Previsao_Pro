@@ -9,6 +9,8 @@ import {
 import previsaoApp from "./previsao-api";
 import dashboardApp from "./dashboard-api";
 import pagamentosApp from "./pagamentos-api";
+import alertasApp from "./alertas-api";
+import relatoriosApp from "./relatorios-api";
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -23,10 +25,16 @@ app.route('/api/dashboard', dashboardApp);
 // Montar rotas de pagamentos
 app.route('/api/pagamentos', pagamentosApp);
 
+// Montar rotas de alertas
+app.route('/api/alertas', alertasApp);
+
+// Montar rotas de relatórios
+app.route('/api/relatorios', relatoriosApp);
+
 // API para Condomínios
 app.get('/api/condominios', async (c) => {
   const db = c.env.DB;
-  const condominios = await db.prepare('SELECT * FROM condominios WHERE ativo = 1').all();
+  const condominios = await db.prepare('SELECT * FROM condominios WHERE ativo = 1 ORDER BY nome').all();
   return c.json(condominios.results);
 });
 
@@ -40,6 +48,64 @@ app.get('/api/condominios/:id', async (c) => {
   }
   
   return c.json(condominio);
+});
+
+app.post('/api/condominios', async (c) => {
+  const data = await c.req.json();
+  const db = c.env.DB;
+  
+  const result = await db.prepare(`
+    INSERT INTO condominios (nome, cnpj, tipo, endereco, area_total_m2, ativo)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `).bind(
+    data.nome,
+    data.cnpj || null,
+    data.tipo,
+    data.endereco || null,
+    data.area_total_m2,
+    true
+  ).run();
+  
+  const novoCondominio = await db.prepare(
+    'SELECT * FROM condominios WHERE id = ?'
+  ).bind(result.meta.last_row_id).first();
+  
+  return c.json(novoCondominio);
+});
+
+app.put('/api/condominios/:id', async (c) => {
+  const id = c.req.param('id');
+  const data = await c.req.json();
+  const db = c.env.DB;
+  
+  await db.prepare(`
+    UPDATE condominios 
+    SET nome = ?, cnpj = ?, tipo = ?, endereco = ?, area_total_m2 = ?
+    WHERE id = ?
+  `).bind(
+    data.nome,
+    data.cnpj || null,
+    data.tipo,
+    data.endereco || null,
+    data.area_total_m2,
+    id
+  ).run();
+  
+  const condominioAtualizado = await db.prepare(
+    'SELECT * FROM condominios WHERE id = ?'
+  ).bind(id).first();
+  
+  return c.json(condominioAtualizado);
+});
+
+app.delete('/api/condominios/:id', async (c) => {
+  const id = c.req.param('id');
+  const db = c.env.DB;
+  
+  // Soft delete
+  await db.prepare('UPDATE condominios SET ativo = 0 WHERE id = ?').bind(id).run();
+  
+  return c.json({ success: true });
 });
 
 // API para Unidades
