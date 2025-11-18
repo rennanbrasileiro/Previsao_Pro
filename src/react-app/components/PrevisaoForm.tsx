@@ -219,28 +219,12 @@ export default function PrevisaoForm({ competencia, itens, onSave, onCalcular, l
         </div>
       </div>
 
-      {/* Resumo financeiro */}
-      <div className="bg-gradient-to-r from-blue-50 via-blue-100 to-blue-50 rounded-2xl p-6 shadow-lg">
-        <h3 className="text-lg font-bold text-blue-900 mb-4">Resumo Financeiro Consolidado</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="text-center p-4 bg-white/70 rounded-xl">
-            <p className="text-sm text-blue-700 mb-1">Somatório Despesas</p>
-            <p className="text-xl font-bold text-blue-900">{formatCurrencyBR(somatorioDespesas)}</p>
-          </div>
-          <div className="text-center p-4 bg-white/70 rounded-xl">
-            <p className="text-sm text-blue-700 mb-1">Acréscimo {editingCompetencia.acrescimo_percentual}%</p>
-            <p className="text-xl font-bold text-green-700">{formatCurrencyBR(acrescimo)}</p>
-          </div>
-          <div className="text-center p-4 bg-white/70 rounded-xl">
-            <p className="text-sm text-blue-700 mb-1">Total Geral</p>
-            <p className="text-xl font-bold text-purple-700">{formatCurrencyBR(totalComAcrescimo)}</p>
-          </div>
-          <div className="text-center p-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl">
-            <p className="text-sm mb-1">Taxa por m²</p>
-            <p className="text-xl font-bold">R$ {formatNumberBR(taxaCalculada)}</p>
-          </div>
-        </div>
-      </div>
+      {/* Resumo financeiro com calculadora */}
+      <RealtimeCalculator
+        somatorioDespesas={somatorioDespesas}
+        acrescimoPercentual={editingCompetencia.acrescimo_percentual || 0}
+        areaTotal={editingCompetencia.area_total_m2 || 0}
+      />
 
       {/* Itens por categoria */}
       {CATEGORIAS_PREVISAO.map(categoria => {
