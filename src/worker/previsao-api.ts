@@ -392,23 +392,9 @@ function _PLACEHOLDER_OLD_FUNCTION(dados: PrevisaoConsolidada): string {
   return '<html><body>Função removida - usar document-templates.ts</body></html>';
 }
 
-function gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): string {
-  const { competencia } = dados;
-  
-  // Pegar o primeiro centro de custo ou SUDENE especificamente
-  let centroCusto = dados.centrosCusto.find(c => c.centro.nome === 'SUDENE');
-  if (!centroCusto && dados.centrosCusto.length > 0) {
-    centroCusto = dados.centrosCusto[0];
-  }
-  if (!centroCusto) return '<html><body>Nenhum centro de custo encontrado</body></html>';
-  
-  const itensPessoal = centroCusto.itens.filter(i => i.categoria === 'Pessoal');
-  const itensContratos = centroCusto.itens.filter(i => i.categoria === 'Contratos');
-  const itensVariaveis = centroCusto.itens.filter(i => i.categoria === 'Variáveis');
-  
-  const totalPessoal = itensPessoal.reduce((s, i) => s + i.valor, 0);
-  const totalContratos = itensContratos.reduce((s, i) => s + i.valor, 0);
-  const totalVariaveis = itensVariaveis.reduce((s, i) => s + i.valor, 0);
+function _PLACEHOLDER_gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): string {
+  // Função removida - usar gerarDocumentoCentroCusto de document-templates.ts
+  return '<html><body>Função removida - usar document-templates.ts</body></html>';
   
   return `
 <!DOCTYPE html>
