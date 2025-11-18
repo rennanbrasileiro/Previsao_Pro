@@ -750,7 +750,17 @@ function gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): string {
 
 function gerarDocumentoFatura(dados: PrevisaoConsolidada): string {
   const { competencia } = dados;
-  const sudene = dados.centrosCusto.find(c => c.centro.nome === 'SUDENE');
+  
+  // Pegar o primeiro centro de custo ou SUDENE especificamente
+  let centroCusto = dados.centrosCusto.find(c => c.centro.nome === 'SUDENE');
+  if (!centroCusto && dados.centrosCusto.length > 0) {
+    centroCusto = dados.centrosCusto[0];
+  }
+  if (!centroCusto) return '<html><body>Nenhum centro de custo encontrado</body></html>';
+  
+  // Calcular data de vencimento (dia 10 do mês da competência)
+  const dataVencimento = `10/${String(competencia.mes).padStart(2, '0')}/${competencia.ano}`;
+  const valorPorExtenso = converterValorParaExtenso(centroCusto.valorTotal);
   
   return `
 <!DOCTYPE html>
@@ -758,59 +768,181 @@ function gerarDocumentoFatura(dados: PrevisaoConsolidada): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Solicitação de Fatura - ${getCompetenciaText(competencia.mes, competencia.ano)}</title>
+    <title>Fatura de Condomínio - ${centroCusto.centro.nome} - ${getCompetenciaText(competencia.mes, competencia.ano)}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        .header { text-align: center; margin-bottom: 40px; border-bottom: 2px solid #007bff; padding-bottom: 20px; }
-        .info { margin: 20px 0; }
-        .valor-destaque { font-size: 1.5em; font-weight: bold; color: #007bff; text-align: center; margin: 30px 0; }
-        .detalhes { background-color: #f8f9fa; padding: 20px; margin: 20px 0; }
-        .rodape { margin-top: 40px; border-top: 1px solid #ddd; padding-top: 20px; font-size: 0.9em; }
+        @page { size: A4; margin: 2cm; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 30px;
+            line-height: 1.6;
+            font-size: 11pt;
+            color: #000;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 20px;
+        }
+        .logo {
+            font-size: 22pt;
+            font-weight: bold;
+            color: #1a5490;
+            margin-bottom: 10px;
+        }
+        .titulo-fatura {
+            font-size: 16pt;
+            font-weight: bold;
+            margin: 20px 0;
+        }
+        .info-fatura {
+            border: 2px solid #000;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .info-fatura table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .info-fatura td {
+            padding: 8px;
+            border: 1px solid #333;
+        }
+        .info-fatura td:first-child {
+            font-weight: bold;
+            width: 30%;
+            background-color: #f0f0f0;
+        }
+        .corpo-texto {
+            margin: 25px 0;
+            text-align: justify;
+            line-height: 1.8;
+        }
+        .dados-pagamento {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 1px solid #ccc;
+        }
+        .dados-pagamento h3 {
+            margin: 0 0 10px 0;
+            font-size: 12pt;
+        }
+        .dados-pagamento table {
+            width: 100%;
+            margin-top: 10px;
+        }
+        .dados-pagamento td {
+            padding: 5px 10px;
+        }
+        .dados-pagamento td:first-child {
+            font-weight: bold;
+            width: 30%;
+        }
+        .rodape {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+            text-align: center;
+        }
+        .assinatura {
+            margin-top: 30px;
+            text-align: center;
+        }
+        .linha-assinatura {
+            border-top: 1px solid #000;
+            width: 300px;
+            margin: 50px auto 10px auto;
+        }
+        .valor-destaque {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #c00;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>SOLICITAÇÃO DE FATURA</h1>
-        <h2>Demonstrativo da Taxa Proporcional</h2>
-        <p><strong>${dados.condominio.nome}</strong></p>
-        ${dados.condominio.endereco ? `<p>${dados.condominio.endereco}</p>` : ''}
-        ${dados.condominio.cnpj ? `<p>CNPJ: ${dados.condominio.cnpj}</p>` : ''}
+        <div class="logo">SOUZA MELO TOWER</div>
+        <div class="titulo-fatura">FATURA DE CONDOMÍNIO</div>
     </div>
 
-    <div class="info">
-        <p><strong>Competência:</strong> ${getCompetenciaText(competencia.mes, competencia.ano)}</p>
-        <p><strong>Cliente:</strong> SUDENE</p>
-        ${sudene?.centro.cnpj ? `<p><strong>CNPJ Cliente:</strong> ${sudene.centro.cnpj}</p>` : ''}
+    <div class="info-fatura">
+        <table>
+            <tr>
+                <td>FATURA N°</td>
+                <td>${competencia.id.toString().padStart(6, '0')}</td>
+            </tr>
+            <tr>
+                <td>VENCIMENTO</td>
+                <td>${dataVencimento}</td>
+            </tr>
+            <tr>
+                <td>VALOR MENSAL</td>
+                <td class="valor-destaque">${formatCurrencyBR(centroCusto.valorTotal)}</td>
+            </tr>
+        </table>
     </div>
 
-    <div class="valor-destaque">
-        Valor a Faturar: ${formatCurrencyBR(sudene?.valorTotal || 0)}
-    </div>
-
-    <div class="detalhes">
-        <h3>Discriminação dos Serviços</h3>
-        <p><strong>Descrição:</strong> Repasse de custos + taxa condominial proporcional por m²</p>
+    <div class="corpo-texto">
+        <p>Prezado(a) <strong>${centroCusto.centro.razao_social || centroCusto.centro.nome}</strong>,</p>
         
-        <h4>Composição do Valor:</h4>
-        <ul>
-            <li>Despesas específicas SUDENE: ${formatCurrencyBR(sudene?.somatorioCentro || 0)}</li>
-            <li>Taxa proporcional (${formatNumberBR(sudene?.centro.area_m2 || 0)} m²): ${formatCurrencyBR(sudene?.proporcionalTaxa || 0)}</li>
-        </ul>
+        <p>Através deste, solicitamos o pagamento da taxa condominial referente ao <strong>MÊS DE ${getCompetenciaText(competencia.mes, competencia.ano).toUpperCase()}</strong>, 
+        no valor de <strong>${formatCurrencyBR(centroCusto.valorTotal)}</strong> (${valorPorExtenso}), 
+        referente à área em uso, a saber: <strong>${centroCusto.centro.endereco || 'Área total de ' + formatNumberBR(centroCusto.centro.area_m2) + 'm²'}</strong>.</p>
         
-        <p><strong>Taxa por m²:</strong> ${formatCurrencyBR(dados.taxaGeral)}</p>
-        <p><strong>Área total do empreendimento:</strong> ${formatNumberBR(competencia.area_total_m2)} m²</p>
+        <p>O referido pagamento deverá ser pago através de depósito na conta corrente abaixo:</p>
+    </div>
+
+    <div class="dados-pagamento">
+        <h3>DADOS PARA PAGAMENTO</h3>
+        <table>
+            <tr>
+                <td>FAVORECIDO:</td>
+                <td>CONDOMÍNIO EDIF. SOUZA MELO TOWER</td>
+            </tr>
+            <tr>
+                <td>BANCO:</td>
+                <td>CAIXA ECONÔMICA FEDERAL</td>
+            </tr>
+            <tr>
+                <td>AG:</td>
+                <td>3018</td>
+            </tr>
+            <tr>
+                <td>C/C:</td>
+                <td>1934-9</td>
+            </tr>
+            <tr>
+                <td>CNPJ:</td>
+                <td>${dados.condominio.cnpj || '25.184.237/0001-09'}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="assinatura">
+        <p>Recife - PE, ${new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+        <div class="linha-assinatura"></div>
+        <p><strong>CONDOMÍNIO EDIF. SOUZA MELO TOWER</strong></p>
+        <p>CNPJ: ${dados.condominio.cnpj || '25.184.237/0001-09'}</p>
     </div>
 
     <div class="rodape">
-        <p><strong>Observações:</strong></p>
-        <ul>
-            <li>Valor sujeito a reajustes conforme contrato</li>
-            <li>Pagamento até o dia 10 do mês subsequente</li>
-            <li>Documento gerado automaticamente em ${new Date().toLocaleDateString('pt-BR')}</li>
-        </ul>
+        <p style="font-size: 9pt;">${dados.condominio.endereco || 'Av. Engenheiro Domingos Ferreira, n.º 1967 - Boa Viagem - Recife - PE'}</p>
     </div>
 </body>
 </html>`;
+}
+
+// Função auxiliar para converter valor para extenso (simplificada)
+function converterValorParaExtenso(valor: number): string {
+  // Implementação simplificada - em produção usar biblioteca especializada
+  const parteInteira = Math.floor(valor);
+  const parteDecimal = Math.round((valor - parteInteira) * 100);
+  
+  // Apenas uma implementação básica para o exemplo
+  return `${parteInteira.toLocaleString('pt-BR')} reais e ${parteDecimal.toString().padStart(2, '0')} centavos`;
 }
 
 function gerarDocumentoBalancete(dados: PrevisaoConsolidada): string {
