@@ -32,6 +32,10 @@ export default function Previsoes() {
     selectedCompetencia ? `/api/previsoes/consolidada?competenciaId=${selectedCompetencia}` : ''
   );
 
+  const { data: centrosCusto } = useAPI<any[]>(
+    `/api/centros-custo?condominioId=${selectedCondominio}`
+  );
+
   // Selecionar primeira competência automaticamente
   useEffect(() => {
     if (competencias?.length && !selectedCompetencia) {
