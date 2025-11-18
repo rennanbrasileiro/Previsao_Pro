@@ -560,9 +560,20 @@ function gerarDocumentoCondominio(dados: PrevisaoConsolidada): string {
 function gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): string {
   const { competencia } = dados;
   
-  // Gerar documento para cada centro de custo (exemplo com SUDENE)
-  const sudene = dados.centrosCusto.find(c => c.centro.nome === 'SUDENE');
-  if (!sudene) return 'Centro de custo SUDENE não encontrado';
+  // Pegar o primeiro centro de custo ou SUDENE especificamente
+  let centroCusto = dados.centrosCusto.find(c => c.centro.nome === 'SUDENE');
+  if (!centroCusto && dados.centrosCusto.length > 0) {
+    centroCusto = dados.centrosCusto[0];
+  }
+  if (!centroCusto) return '<html><body>Nenhum centro de custo encontrado</body></html>';
+  
+  const itensPessoal = centroCusto.itens.filter(i => i.categoria === 'Pessoal');
+  const itensContratos = centroCusto.itens.filter(i => i.categoria === 'Contratos');
+  const itensVariaveis = centroCusto.itens.filter(i => i.categoria === 'Variáveis');
+  
+  const totalPessoal = itensPessoal.reduce((s, i) => s + i.valor, 0);
+  const totalContratos = itensContratos.reduce((s, i) => s + i.valor, 0);
+  const totalVariaveis = itensVariaveis.reduce((s, i) => s + i.valor, 0);
   
   return `
 <!DOCTYPE html>
@@ -570,51 +581,168 @@ function gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): string {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Previsão de Despesas SUDENE - ${getCompetenciaText(competencia.mes, competencia.ano)}</title>
+    <title>Previsão de Despesas ${centroCusto.centro.nome} - ${getCompetenciaText(competencia.mes, competencia.ano)}</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-        .header { text-align: center; margin-bottom: 40px; }
-        .categoria { margin-bottom: 20px; }
-        .categoria h3 { background-color: #f8f9fa; padding: 10px; margin: 0; border-left: 4px solid #28a745; }
-        .total { font-weight: bold; text-align: right; margin: 10px 0; font-size: 1.1em; }
-        .resumo { background-color: #e9ecef; padding: 20px; margin: 20px 0; }
-        .nota { font-style: italic; margin-top: 20px; padding: 15px; background-color: #fff3cd; }
+        @page { size: A4; margin: 2cm; }
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            line-height: 1.4;
+            font-size: 11pt;
+            color: #000;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+        }
+        .logo {
+            font-size: 20pt;
+            font-weight: bold;
+            color: #1a5490;
+            margin-bottom: 5px;
+        }
+        .endereco {
+            font-size: 9pt;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .titulo-principal {
+            font-size: 14pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 15px 0;
+        }
+        .secao {
+            margin: 20px 0;
+            page-break-inside: avoid;
+        }
+        .secao-titulo {
+            font-size: 11pt;
+            font-weight: bold;
+            text-decoration: underline;
+            margin: 15px 0 10px 0;
+        }
+        .item-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 3px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        .item-descricao {
+            flex: 1;
+            padding-right: 10px;
+        }
+        .item-valor {
+            text-align: right;
+            min-width: 120px;
+            font-weight: 500;
+        }
+        .total-secao {
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 8px;
+            background-color: #f0f0f0;
+            text-align: right;
+            border: 1px solid #ccc;
+        }
+        .calculo-pagamento {
+            margin: 25px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border: 2px solid #333;
+        }
+        .calculo-linha {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 11pt;
+        }
+        .calculo-linha.destaque {
+            font-weight: bold;
+            font-size: 12pt;
+            border-top: 2px solid #000;
+            border-bottom: 2px solid #000;
+            padding: 10px 0;
+            margin-top: 10px;
+        }
+        .nota-explicativa {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff9e6;
+            border: 1px solid #e0d090;
+            border-radius: 5px;
+        }
+        .nota-explicativa strong {
+            display: block;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>PREVISÃO DE DESPESAS SUDENE</h1>
-        <h2>${getCompetenciaText(competencia.mes, competencia.ano)}</h2>
-        <p><strong>${sudene.centro.endereco}</strong></p>
-        ${sudene.centro.cnpj ? `<p>CNPJ: ${sudene.centro.cnpj}</p>` : ''}
+        <div class="logo">SOUZA MELO TOWER</div>
+        <div class="endereco">CONDOMÍNIO DO EDIFÍCIO SOUZA MELO TOWER / ${dados.condominio.endereco || 'Av. Eng. Domingos Ferreira, 1967 - Boa Viagem - Recife-PE'}</div>
+        <div class="titulo-principal">PREVISÃO DE DESPESAS ${centroCusto.centro.nome.toUpperCase()} - ${getCompetenciaText(competencia.mes, competencia.ano).toUpperCase()}</div>
     </div>
 
-    <div class="categoria">
-        <h3>Pessoal</h3>
-        <div class="total">TOTAL: ${formatCurrencyBR(sudene.itens.filter(i => i.categoria === 'Pessoal').reduce((s, i) => s + i.valor, 0))}</div>
+    <div class="secao">
+        <div class="secao-titulo">DESPESAS DE PESSOAL</div>
+        ${itensPessoal.map(item => `
+            <div class="item-linha">
+                <div class="item-descricao">${item.descricao}</div>
+                <div class="item-valor">${formatCurrencyBR(item.valor)}</div>
+            </div>
+        `).join('')}
+        <div class="total-secao">TOTAL: ${formatCurrencyBR(totalPessoal)}</div>
     </div>
 
-    <div class="categoria">
-        <h3>Contratos</h3>
-        <div class="total">TOTAL: ${formatCurrencyBR(sudene.itens.filter(i => i.categoria === 'Contratos').reduce((s, i) => s + i.valor, 0))}</div>
+    <div class="secao">
+        <div class="secao-titulo">CONTRATOS MENSAIS</div>
+        ${itensContratos.map(item => `
+            <div class="item-linha">
+                <div class="item-descricao">${item.descricao}</div>
+                <div class="item-valor">${formatCurrencyBR(item.valor)}</div>
+            </div>
+        `).join('')}
+        <div class="total-secao">TOTAL CONTRATOS MENSAIS: ${formatCurrencyBR(totalContratos)}</div>
     </div>
 
-    <div class="categoria">
-        <h3>Variáveis</h3>
-        <div class="total">TOTAL: ${formatCurrencyBR(sudene.itens.filter(i => i.categoria === 'Variáveis').reduce((s, i) => s + i.valor, 0))}</div>
+    <div class="secao">
+        <div class="secao-titulo">DESPESAS VARIÁVEIS</div>
+        ${itensVariaveis.map(item => `
+            <div class="item-linha">
+                <div class="item-descricao">${item.descricao}</div>
+                <div class="item-valor">${formatCurrencyBR(item.valor)}</div>
+            </div>
+        `).join('')}
+        <div class="total-secao">TOTAL DESPESAS VARIÁVEIS: ${formatCurrencyBR(totalVariaveis)}</div>
     </div>
 
-    <div class="resumo">
-        <div class="total">SOMATÓRIO SUDENE: ${formatCurrencyBR(sudene.somatorioCentro)}</div>
-        <div class="total">Acréscimo proporcional: ${formatCurrencyBR(sudene.proporcionalTaxa)}</div>
-        <div class="total" style="font-size: 1.3em; color: #007bff;">TOTAL FINAL: ${formatCurrencyBR(sudene.valorTotal)}</div>
+    <div class="calculo-pagamento">
+        <div class="secao-titulo">CÁLCULO PARA PAGAMENTO</div>
+        <div class="calculo-linha">
+            <span>SOMATÓRIO DAS DESPESAS ${centroCusto.centro.nome.toUpperCase()}:</span>
+            <span>${formatCurrencyBR(centroCusto.somatorioCentro)}</span>
+        </div>
+        <div class="calculo-linha">
+            <span>VALOR PROPORCIONAL À TAXA DE CONDOMÍNIO GERAL m² ${centroCusto.centro.nome.toUpperCase()}:</span>
+            <span>${formatCurrencyBR(centroCusto.proporcionalTaxa)}</span>
+        </div>
+        <div class="calculo-linha destaque">
+            <span>SOMATÓRIO DA TAXA DE CONDOMÍNIO PROPORCIONAL - ${centroCusto.centro.nome.toUpperCase()}:</span>
+            <span>${formatCurrencyBR(centroCusto.valorTotal)}</span>
+        </div>
     </div>
 
-    <div class="nota">
-        <strong>Nota Explicativa:</strong><br>
-        (SOMATÓRIO DAS DESPESAS SUDENE) + (VALOR PROPORCIONAL À TAXA DE CONDOMÍNIO GERAL m² SUDENE)
+    <div class="nota-explicativa">
+        <strong>Nota explicativa:</strong>
+        (SOMATÓRIO DAS DESPESAS ${centroCusto.centro.nome.toUpperCase()}) + (VALOR PROPORCIONAL À TAXA DE CONDOMÍNIO GERAL m² ${centroCusto.centro.nome.toUpperCase()})
         <br><br>
-        Área SUDENE: ${formatNumberBR(sudene.centro.area_m2)} m²
+        Área ${centroCusto.centro.nome}: ${formatNumberBR(centroCusto.centro.area_m2)} m²
+        ${centroCusto.centro.endereco ? `<br>Referência: ${centroCusto.centro.endereco}` : ''}
     </div>
 </body>
 </html>`;
