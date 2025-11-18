@@ -33,8 +33,11 @@ export default function Layout({ children }: LayoutProps) {
                 PrevisãoPro
               </h1>
             </div>
-            <div className="text-sm text-slate-600">
-              Sistema Completo de Previsão de Custos Condominiais e Balancetes
+            <div className="flex items-center space-x-4">
+              <div className="text-sm text-slate-600">
+                Sistema Completo de Previsão de Custos Condominiais e Balancetes
+              </div>
+              <AlertsWidget competenciaId={1} />
             </div>
           </div>
         </div>
