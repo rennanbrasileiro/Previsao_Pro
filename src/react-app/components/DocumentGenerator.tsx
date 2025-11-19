@@ -20,7 +20,7 @@ type DocumentFormat = 'html' | 'pdf';
 export default function DocumentGenerator({ competenciaId, centrosCusto }: DocumentGeneratorProps) {
   const [selectedType, setSelectedType] = useState<DocumentType>('condominio');
   const [selectedFormat, setSelectedFormat] = useState<DocumentFormat>('html');
-  const [selectedCentros, setSelectedCentros] = useState<number[]>([]);
+  const [selectedCentro, setSelectedCentro] = useState<number | null>(null);
   const [showPreview, setShowPreview] = useState(false);
   const [previewContent, setPreviewContent] = useState('');
   const [previewTitle, setPreviewTitle] = useState('');
@@ -66,13 +66,13 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
       let url = '';
       
       if (selectedType === 'condominio') {
-        url = `/api/previsoes/documento/${competenciaId}?tipo=condominio&formato=${selectedFormat}`;
-      } else if (selectedType === 'centro_custo' && selectedCentros.length > 0) {
-        url = `/api/previsoes/documento/${competenciaId}?tipo=centro_custo&centroCustoId=${selectedCentros[0]}&formato=${selectedFormat}`;
-      } else if (selectedType === 'fatura' && selectedCentros.length > 0) {
-        url = `/api/previsoes/documento/${competenciaId}?tipo=fatura&centroCustoId=${selectedCentros[0]}&formato=${selectedFormat}`;
+        url = `/api/previsoes/download?competenciaId=${competenciaId}&tipo=condominio&formato=${selectedFormat}`;
+      } else if (selectedType === 'centro_custo' && selectedCentro) {
+        url = `/api/previsoes/download?competenciaId=${competenciaId}&tipo=centro_custo&centroCustoId=${selectedCentro}&formato=${selectedFormat}`;
+      } else if (selectedType === 'fatura' && selectedCentro) {
+        url = `/api/previsoes/download?competenciaId=${competenciaId}&tipo=fatura&centroCustoId=${selectedCentro}&formato=${selectedFormat}`;
       } else if (selectedType === 'balancete') {
-        url = `/api/previsoes/documento/${competenciaId}?tipo=balancete&formato=${selectedFormat}`;
+        url = `/api/previsoes/download?competenciaId=${competenciaId}&tipo=balancete&formato=${selectedFormat}`;
       }
 
       if (!url) {
@@ -83,6 +83,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
 
       if (action === 'preview') {
         const response = await fetch(url);
+        if (!response.ok) throw new Error('Erro ao carregar pré-visualização');
         const html = await response.text();
         setPreviewContent(html);
         setPreviewTitle(documentTypes.find(d => d.type === selectedType)?.label || 'Documento');
@@ -91,6 +92,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
         window.open(url, '_blank');
       } else if (action === 'print') {
         const response = await fetch(url);
+        if (!response.ok) throw new Error('Erro ao carregar documento para impressão');
         const html = await response.text();
         const printWindow = window.open('', '_blank');
         if (printWindow) {
@@ -101,12 +103,17 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
           };
         }
       } else if (action === 'download') {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Erro ao baixar documento');
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
+        link.href = downloadUrl;
         link.download = `${selectedType}_${competenciaId}.${selectedFormat}`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        URL.revokeObjectURL(downloadUrl);
       }
     } catch (error) {
       console.error('Erro ao gerar documento:', error);
@@ -117,16 +124,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
   };
 
   const handleToggleCentro = (centroId: number) => {
-    if (selectedCentros.includes(centroId)) {
-      setSelectedCentros(selectedCentros.filter(id => id !== centroId));
-    } else {
-      // Para fatura e centro_custo, permitir apenas um
-      if (selectedType === 'fatura' || selectedType === 'centro_custo') {
-        setSelectedCentros([centroId]);
-      } else {
-        setSelectedCentros([...selectedCentros, centroId]);
-      }
-    }
+    setSelectedCentro((prev) => (prev === centroId ? null : centroId));
   };
 
   const currentDocType = documentTypes.find(d => d.type === selectedType);
@@ -166,7 +164,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
                   whileTap={{ scale: 0.98 }}
                   onClick={() => {
                     setSelectedType(docType.type);
-                    setSelectedCentros([]);
+                    setSelectedCentro(null);
                   }}
                   className={`p-4 rounded-xl border-2 transition-all text-left ${
                     isSelected
@@ -193,7 +191,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {centrosCusto.map((centro) => {
-                const isSelected = selectedCentros.includes(centro.id);
+                const isSelected = selectedCentro === centro.id;
                 
                 return (
                   <motion.button
@@ -222,6 +220,12 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {requiresCentro && centrosCusto.length === 0 && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-xl text-sm text-yellow-800">
+            Nenhum centro de custo ativo encontrado para esta competência. Cadastre um centro de custo para gerar este tipo de documento.
           </div>
         )}
 
@@ -264,7 +268,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleGenerateDocument('preview')}
-            disabled={isGenerating || (requiresCentro && selectedCentros.length === 0)}
+            disabled={isGenerating || (requiresCentro && !selectedCentro)}
             className="flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Eye className="w-5 h-5" />
@@ -275,7 +279,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleGenerateDocument('newtab')}
-            disabled={isGenerating || (requiresCentro && selectedCentros.length === 0)}
+            disabled={isGenerating || (requiresCentro && !selectedCentro)}
             className="flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <ExternalLink className="w-5 h-5" />
@@ -286,7 +290,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleGenerateDocument('print')}
-            disabled={isGenerating || (requiresCentro && selectedCentros.length === 0)}
+            disabled={isGenerating || (requiresCentro && !selectedCentro)}
             className="flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Printer className="w-5 h-5" />
@@ -297,7 +301,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleGenerateDocument('download')}
-            disabled={isGenerating || (requiresCentro && selectedCentros.length === 0)}
+            disabled={isGenerating || (requiresCentro && !selectedCentro)}
             className="flex items-center justify-center space-x-2 px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed transition-all"
           >
             <Download className="w-5 h-5" />
@@ -306,7 +310,7 @@ export default function DocumentGenerator({ competenciaId, centrosCusto }: Docum
         </div>
 
         {/* Informações adicionais */}
-        {requiresCentro && selectedCentros.length === 0 && (
+        {requiresCentro && !selectedCentro && (
           <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-xl">
             <p className="text-sm text-yellow-800">
               ⚠️ Selecione um centro de custo para gerar este tipo de documento.

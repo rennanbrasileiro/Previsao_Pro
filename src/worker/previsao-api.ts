@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { Env } from './env';
 import { 
   type Competencia,
   type PrevisaoItem,
@@ -262,10 +263,15 @@ previsaoApp.post('/recalcular', async (c) => {
 previsaoApp.get('/download', async (c) => {
   const competenciaId = c.req.query('competenciaId');
   const tipo = c.req.query('tipo') as 'condominio' | 'centro_custo' | 'fatura' | 'balancete';
+  const centroCustoId = c.req.query('centroCustoId');
   const formato = c.req.query('formato') as 'pdf' | 'html' || 'html';
   
   if (!competenciaId || !tipo) {
     return c.json({ error: 'Parâmetros obrigatórios: competenciaId, tipo' }, 400);
+  }
+
+  if ((tipo === 'centro_custo' || tipo === 'fatura') && !centroCustoId) {
+    return c.json({ error: 'centroCustoId é obrigatório para este documento' }, 400);
   }
   
   try {
@@ -301,7 +307,18 @@ previsaoApp.get('/download', async (c) => {
     const centrosCusto = await db.prepare('SELECT * FROM centros_custo WHERE condominio_id = ? AND ativo = 1').bind(competencia.condominio_id).all();
     
     // Calcular rateio por centros de custo
-    const rateioUnidades = (centrosCusto.results as CentroCusto[]).map(centro => ({
+    const centrosBase = centrosCusto.results as CentroCusto[];
+    const centrosFiltrados = centroCustoId
+      ? centrosBase.filter((centro) => centro.id === Number(centroCustoId))
+      : centrosBase;
+
+    if ((tipo === 'centro_custo' || tipo === 'fatura') && centrosFiltrados.length === 0) {
+      return c.json({ error: 'Centro de custo não encontrado para esta competência' }, 404);
+    }
+
+    const centrosParaDocumento = (tipo === 'centro_custo' || tipo === 'fatura') ? centrosFiltrados : centrosBase;
+
+    const rateioUnidades = centrosParaDocumento.map(centro => ({
       nome: centro.nome,
       area_m2: centro.area_m2,
       valor: calcularRateio(centro.area_m2, competencia.area_total_m2, somatarioTaxaGeral)
@@ -309,7 +326,7 @@ previsaoApp.get('/download', async (c) => {
     
     // Buscar itens específicos dos centros de custo
     const centrosCustoCompletos = [];
-    for (const centro of centrosCusto.results as CentroCusto[]) {
+    for (const centro of centrosParaDocumento) {
       const itensCentro = await db.prepare(
         'SELECT * FROM centro_custo_itens WHERE competencia_id = ? AND centro_custo_id = ?'
       ).bind(competenciaId, centro.id).all();
@@ -377,41 +394,6 @@ previsaoApp.get('/download', async (c) => {
     return c.json({ error: 'Erro interno do servidor' }, 500);
   }
 });
-
-// Funções antigas de geração de documentos removidas
-// Agora usando document-templates.ts para templates melhorados
-/* FUNÇÕES ANTIGAS REMOVIDAS:
- * - gerarDocumentoCondominio
- * - gerarDocumentoCentroCusto  
- * - gerarDocumentoFatura
- * Agora importadas de document-templates.ts
- */
-
-function _PLACEHOLDER_OLD_FUNCTION(dados: PrevisaoConsolidada): string {
-  // Função removida - usar gerarDocumentoCondominio de document-templates.ts
-  return '<html><body>Função removida - usar document-templates.ts</body></html>';
-}
-
-function _PLACEHOLDER_gerarDocumentoCentroCusto(dados: PrevisaoConsolidada): string {
-  // Função removida - usar gerarDocumentoCentroCusto de document-templates.ts
-  return '<html><body>Função removida - usar document-templates.ts</body></html>';
-}
-
-function _PLACEHOLDER_gerarDocumentoFatura(dados: PrevisaoConsolidada): string {
-  // Função removida - usar gerarDocumentoFatura de document-templates.ts
-  return '<html><body>Função removida - usar document-templates.ts</body></html>';
-}
-
-// Função auxiliar para converter valor para extenso (simplificada)
-function converterValorParaExtenso(valor: number): string {
-  // Implementação simplificada - em produção usar biblioteca especializada
-  const parteInteira = Math.floor(valor);
-  const parteDecimal = Math.round((valor - parteInteira) * 100);
-  
-  // Apenas uma implementação básica para o exemplo
-  return `${parteInteira.toLocaleString('pt-BR')} reais e ${parteDecimal.toString().padStart(2, '0')} centavos`;
-}
-
 
 function gerarDocumentoBalancete(dados: PrevisaoConsolidada): string {
   const { competencia, totaisPorCategoria, centrosCusto } = dados;
