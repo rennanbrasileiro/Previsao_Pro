@@ -198,6 +198,48 @@ Status:
 - **Animations:** Framer Motion
 - **Charts:** Recharts
 - **Build:** Vite
+
+## 🧪 Validação Rápida em Ambiente Local
+
+Siga este checklist para garantir que tudo está funcionando como esperado após um pull ou ajuste.
+
+1) **Instalar e preparar o ambiente**
+   ```bash
+   npm install --legacy-peer-deps
+   chmod +x ./scripts/init-db.sh
+   ./scripts/init-db.sh
+   ```
+
+2) **Subir o servidor de desenvolvimento**
+   ```bash
+   npm run dev
+   ```
+   - Acesse `http://localhost:5173` no navegador.
+
+3) **Fluxo mínimo de Previsões**
+   - Na barra lateral, entre em **Previsões**.
+   - Clique em **Novo Condomínio** (se estiver vazio) e cadastre um condomínio com área total.
+   - Clique em **Nova Competência**, escolha mês/ano e confirme.
+   - Selecione a competência criada na lista; o formulário avançado abre automaticamente.
+   - Adicione itens de despesa por categoria; o total e a taxa por m² se atualizam em tempo real.
+   - Use o seletor de centro de custo (se houver centros cadastrados) para vincular itens específicos.
+   - O indicador no topo mostra se há alterações não salvas; o botão **Salvar** confirma os dados.
+
+4) **Gerar documentos**
+   - Com a competência selecionada, abra o painel **Documentos**.
+   - Escolha o tipo (Condomínio, Centro de Custo, Fatura ou Balancete).
+   - Selecione um centro de custo quando requerido e clique em **HTML** para abrir o preview; use **PDF** para baixar.
+
+5) **Pagamentos (validação básica)**
+   - Acesse **Pagamentos**.
+   - Selecione a mesma competência; use **Gerar a partir da previsão** para popular a lista.
+   - Marque um item como **Pago** para ver o status atualizado.
+
+6) **Build de produção opcional**
+   ```bash
+   npm run build
+   ```
+   Útil para confirmar que não há erros de tipagem ou bundling.
 - **Icons:** Lucide React
 
 ## 📊 Dados de Exemplo
