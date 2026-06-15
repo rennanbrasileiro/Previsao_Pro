@@ -1,24 +1,29 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { 
-  Save, 
-  Lock, 
-  Unlock, 
-  Calculator, 
+import {
+  Save,
+  Lock,
+  Unlock,
+  Calculator,
   Edit3,
   Copy,
   Download,
+  Plus,
   Wand2,
   AlertTriangle,
   CheckCircle,
   History,
-  Target
+  Target,
+  Trash2
 } from 'lucide-react';
-import { 
-  PrevisaoItem, 
-  Competencia, 
-  formatCurrencyBR
+import {
+  PrevisaoItem,
+  Competencia,
+  CATEGORIAS_PREVISAO,
+  formatCurrencyBR,
+  formatNumberBR
 } from '../../shared/previsao-types';
+import RealtimeCalculator from './RealtimeCalculator';
 
 interface PrevisaoFormAdvancedProps {
   competencia: Competencia;
@@ -56,6 +61,17 @@ export default function PrevisaoFormAdvanced({
   const [autoSave, setAutoSave] = useState(true);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [modoVisualizacao, setModoVisualizacao] = useState(false);
+  const [novoItem, setNovoItem] = useState<{
+    categoria: string;
+    descricao: string;
+    valor: string;
+  }>({
+    categoria: CATEGORIAS_PREVISAO[0],
+    descricao: '',
+    valor: '',
+  });
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(CATEGORIAS_PREVISAO));
 
   // Templates predefinidos
   const templates: Template[] = [
@@ -81,8 +97,13 @@ export default function PrevisaoFormAdvanced({
       acrescimo_percentual: competencia.acrescimo_percentual,
       area_total_m2: competencia.area_total_m2
     });
+    setIsDirty(false);
     validateForm();
   }, [itens, competencia]);
+
+  useEffect(() => {
+    validateForm();
+  }, [editingItens, editingCompetencia]);
 
   // Auto-save
   useEffect(() => {
@@ -93,7 +114,13 @@ export default function PrevisaoFormAdvanced({
       
       return () => clearTimeout(timeoutId);
     }
-  }, [editingItens, editingCompetencia, autoSave, isDirty]);
+  }, [editingItens, editingCompetencia, autoSave, isDirty, loading]);
+
+  const parseInputNumber = (value: string) => {
+    const sanitized = value.replace(/[^0-9,.-]/g, '').replace(',', '.');
+    const parsed = parseFloat(sanitized);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  };
 
   const validateForm = () => {
     const errors: ValidationError[] = [];
@@ -153,6 +180,59 @@ export default function PrevisaoFormAdvanced({
     }
   };
 
+  const handleUpdateCompetencia = (field: keyof Competencia, value: string) => {
+    const numericValue = parseInputNumber(value);
+    setEditingCompetencia({
+      ...editingCompetencia,
+      [field]: numericValue,
+    });
+    setIsDirty(true);
+  };
+
+  const handleAddItem = () => {
+    if (!novoItem.descricao || !novoItem.valor) return;
+
+    const newItem: PrevisaoItem = {
+      id: Date.now(),
+      competencia_id: competencia.id,
+      categoria: novoItem.categoria as any,
+      descricao: novoItem.descricao,
+      valor: parseInputNumber(novoItem.valor),
+      observacoes: null,
+      ordem: editingItens.filter((i) => i.categoria === novoItem.categoria).length + 1,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    setEditingItens([...editingItens, newItem]);
+    setNovoItem({ categoria: novoItem.categoria, descricao: '', valor: '' });
+    setIsDirty(true);
+  };
+
+  const handleUpdateItem = (index: number, field: keyof PrevisaoItem, value: string) => {
+    const updated = [...editingItens];
+    const parsedValue = field === 'valor' ? parseInputNumber(value) : (value as any);
+    updated[index] = { ...updated[index], [field]: parsedValue };
+    setEditingItens(updated);
+    setIsDirty(true);
+  };
+
+  const handleDeleteItem = (index: number) => {
+    const updated = editingItens.filter((_, i) => i !== index);
+    setEditingItens(updated);
+    setIsDirty(true);
+  };
+
+  const toggleCategory = (categoria: string) => {
+    const newExpanded = new Set(expandedCategories);
+    if (newExpanded.has(categoria)) {
+      newExpanded.delete(categoria);
+    } else {
+      newExpanded.add(categoria);
+    }
+    setExpandedCategories(newExpanded);
+  };
+
   const handleExportTemplate = () => {
     const template = {
       nome: `Template ${competencia.mes}/${competencia.ano}`,
@@ -175,6 +255,16 @@ export default function PrevisaoFormAdvanced({
   const somatorioDespesas = editingItens.reduce((sum, item) => sum + item.valor, 0);
   const acrescimo = somatorioDespesas * ((editingCompetencia.acrescimo_percentual || 0) / 100);
   const totalComAcrescimo = somatorioDespesas + acrescimo;
+  const taxaCalculada = totalComAcrescimo / (editingCompetencia.area_total_m2 || 1);
+  const totaisPorCategoria = useMemo(() => {
+    const totais: Record<string, number> = {};
+    CATEGORIAS_PREVISAO.forEach((categoria) => {
+      totais[categoria] = editingItens
+        .filter((item) => item.categoria === categoria)
+        .reduce((sum, item) => sum + item.valor, 0);
+    });
+    return totais;
+  }, [editingItens]);
 
   const isReadonly = competencia.status === 'fechado';
   const hasErrors = validationErrors.filter(e => e.severity === 'error').length > 0;
@@ -212,7 +302,7 @@ export default function PrevisaoFormAdvanced({
                   Alterações não salvas
                 </span>
               )}
-              
+
               {lastSaved && (
                 <span className="text-sm text-slate-600">
                   Salvo em: {lastSaved.toLocaleTimeString()}
@@ -220,8 +310,22 @@ export default function PrevisaoFormAdvanced({
               )}
             </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setModoVisualizacao(!modoVisualizacao)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg border ${
+                modoVisualizacao
+                  ? 'bg-slate-100 text-slate-700 border-slate-200'
+                  : 'bg-slate-900 text-white border-slate-800'
+              }`}
+            >
+              <Edit3 className="w-4 h-4" />
+              <span>{modoVisualizacao ? 'Modo leitura' : 'Editar'}</span>
+            </motion.button>
+
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -257,7 +361,7 @@ export default function PrevisaoFormAdvanced({
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowValidation(!showValidation)}
               className={`flex items-center space-x-2 px-3 py-2 rounded-lg transition-colors ${
-                hasErrors 
+                hasErrors
                   ? 'bg-red-600 hover:bg-red-700 text-white'
                   : hasWarnings
                   ? 'bg-amber-600 hover:bg-amber-700 text-white'
@@ -282,7 +386,7 @@ export default function PrevisaoFormAdvanced({
               <Calculator className="w-4 h-4" />
               <span>Recalcular</span>
             </motion.button>
-            
+
             {!isReadonly && (
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -298,6 +402,40 @@ export default function PrevisaoFormAdvanced({
           </div>
         </div>
       </motion.div>
+
+      <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-slate-50 p-4 rounded-xl">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Área Total do Condomínio (m²)</label>
+            <input
+              type="text"
+              value={formatNumberBR(editingCompetencia.area_total_m2 || 0)}
+              onChange={(e) => handleUpdateCompetencia('area_total_m2', e.target.value)}
+              disabled={isReadonly || modoVisualizacao}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100 font-mono"
+            />
+          </div>
+          <div className="bg-slate-50 p-4 rounded-xl">
+            <label className="block text-sm font-medium text-slate-700 mb-2">Acréscimo Percentual (%)</label>
+            <input
+              type="text"
+              value={formatNumberBR(editingCompetencia.acrescimo_percentual || 0)}
+              onChange={(e) => handleUpdateCompetencia('acrescimo_percentual', e.target.value)}
+              disabled={isReadonly || modoVisualizacao}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100 font-mono"
+            />
+          </div>
+          <div className="bg-blue-50 p-4 rounded-xl">
+            <label className="block text-sm font-medium text-blue-700 mb-2">Taxa Calculada (R$/m²)</label>
+            <input
+              type="text"
+              value={formatCurrencyBR(taxaCalculada)}
+              disabled
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-blue-100 text-blue-800 font-bold font-mono"
+            />
+          </div>
+        </div>
+      </div>
 
       {/* Painel de Validação */}
       {showValidation && validationErrors.length > 0 && (
@@ -395,6 +533,112 @@ export default function PrevisaoFormAdvanced({
           </motion.div>
         </div>
       )}
+
+      <RealtimeCalculator
+        somatorioDespesas={somatorioDespesas}
+        acrescimoPercentual={editingCompetencia.acrescimo_percentual || 0}
+        areaTotal={editingCompetencia.area_total_m2 || 0}
+      />
+
+      {CATEGORIAS_PREVISAO.map((categoria) => {
+        const isExpanded = expandedCategories.has(categoria);
+        const itensCategoria = editingItens.filter((item) => item.categoria === categoria);
+        const totalCategoria = totaisPorCategoria[categoria] || 0;
+
+        return (
+          <div key={categoria} className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/60 overflow-hidden">
+            <div
+              className="flex justify-between items-center p-6 bg-gradient-to-r from-slate-50 to-slate-100 cursor-pointer hover:from-slate-100 hover:to-slate-200 transition-all"
+              onClick={() => toggleCategory(categoria)}
+            >
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">{categoria}</h3>
+                <p className="text-xs text-slate-600">{itensCategoria.length} itens</p>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="text-lg font-bold text-blue-600">{formatCurrencyBR(totalCategoria)}</div>
+                <div className={`transform transition-transform ${isExpanded ? 'rotate-180' : ''}`}>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {isExpanded && (
+              <div className="p-6 space-y-3">
+                {itensCategoria.map((item) => {
+                  const globalIndex = editingItens.findIndex((i) => i.id === item.id);
+                  return (
+                    <div key={item.id} className="flex items-center space-x-3 p-4 bg-slate-50/80 rounded-xl hover:bg-slate-100/80 transition-colors">
+                      <div className="flex-1">
+                        <input
+                          type="text"
+                          value={item.descricao}
+                          onChange={(e) => handleUpdateItem(globalIndex, 'descricao', e.target.value)}
+                          disabled={isReadonly || modoVisualizacao}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100"
+                          placeholder="Descrição do item"
+                        />
+                      </div>
+                      <div className="w-36">
+                        <input
+                          type="text"
+                          value={formatCurrencyBR(item.valor)}
+                          onChange={(e) => handleUpdateItem(globalIndex, 'valor', e.target.value)}
+                          disabled={isReadonly || modoVisualizacao}
+                          className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-slate-100 font-mono"
+                          placeholder="R$ 0,00"
+                        />
+                      </div>
+                      {!isReadonly && !modoVisualizacao && (
+                        <button
+                          onClick={() => handleDeleteItem(globalIndex)}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Remover item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {!isReadonly && !modoVisualizacao && (
+                  <div className="flex items-center space-x-3 p-4 bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl border-2 border-dashed border-blue-300">
+                    <div className="flex-1">
+                      <input
+                        type="text"
+                        value={novoItem.categoria === categoria ? novoItem.descricao : ''}
+                        onChange={(e) => setNovoItem({ ...novoItem, categoria, descricao: e.target.value })}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder="Nova descrição..."
+                      />
+                    </div>
+                    <div className="w-36">
+                      <input
+                        type="text"
+                        value={novoItem.categoria === categoria ? novoItem.valor : ''}
+                        onChange={(e) => setNovoItem({ ...novoItem, categoria, valor: e.target.value })}
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono"
+                        placeholder="R$ 0,00"
+                      />
+                    </div>
+                    <button
+                      onClick={handleAddItem}
+                      disabled={!novoItem.descricao || !novoItem.valor || novoItem.categoria !== categoria}
+                      className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title="Adicionar item"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
 
       {/* Resumo dos Valores */}
       <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6">

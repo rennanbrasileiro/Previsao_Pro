@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import type { Env } from './env';
 
 const alertasApp = new Hono<{ Bindings: Env }>();
 

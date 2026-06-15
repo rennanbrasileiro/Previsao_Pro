@@ -1,5 +1,6 @@
 import { Hono } from "hono";
-import { formatCurrencyBR, formatNumberBR, getCompetenciaText } from "../shared/previsao-types";
+import type { Env } from './env';
+import { formatCurrencyBR, getCompetenciaText } from "../shared/previsao-types";
 
 const relatoriosApp = new Hono<{ Bindings: Env }>();
 

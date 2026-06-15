@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Calendar, FileText, Download, Plus, Lock } from 'lucide-react';
-import PrevisaoForm from '../components/PrevisaoForm';
+import PrevisaoFormAdvanced from '../components/PrevisaoFormAdvanced';
 import DocumentGenerator from '../components/DocumentGenerator';
 import { 
   Competencia, 
@@ -16,6 +16,7 @@ export default function Previsoes() {
   const [selectedCondominio, setSelectedCondominio] = useState<number>(1);
   const [selectedCompetencia, setSelectedCompetencia] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showResumoDetalhado, setShowResumoDetalhado] = useState(false);
 
   const { data: condominios } = useAPI<any[]>('/api/condominios');
   const { data: competencias, refetch: refetchCompetencias } = useAPI<Competencia[]>(
@@ -36,6 +37,11 @@ export default function Previsoes() {
     `/api/centros-custo?condominioId=${selectedCondominio}`
   );
 
+  // Limpar seleção ao trocar de condomínio
+  useEffect(() => {
+    setSelectedCompetencia(null);
+  }, [selectedCondominio]);
+
   // Selecionar primeira competência automaticamente
   useEffect(() => {
     if (competencias?.length && !selectedCompetencia) {
@@ -43,12 +49,16 @@ export default function Previsoes() {
     }
   }, [competencias, selectedCompetencia]);
 
-  // Debug: log dos dados para verificar se estão chegando
-  useEffect(() => {
-    console.log('Debug - competencia:', competencia);
-    console.log('Debug - itens:', itens);
-    console.log('Debug - selectedCompetencia:', selectedCompetencia);
-  }, [competencia, itens, selectedCompetencia]);
+  const sortedCompetencias = competencias
+    ? [...competencias].sort((a, b) => {
+        if (a.ano === b.ano) return b.mes - a.mes;
+        return b.ano - a.ano;
+      })
+    : [];
+
+  const currentIndex = sortedCompetencias.findIndex((c) => c.id === selectedCompetencia);
+  const previousCompetencia = currentIndex >= 0 ? sortedCompetencias[currentIndex + 1] : undefined;
+  const nextCompetencia = currentIndex > 0 ? sortedCompetencias[currentIndex - 1] : undefined;
 
   const handleSaveItens = async (novosItens: PrevisaoItem[], dadosCompetencia: Partial<Competencia>) => {
     try {
@@ -106,10 +116,18 @@ export default function Previsoes() {
     }
   };
 
-  const handleDownloadDocument = async (tipo: 'condominio' | 'centro_custo' | 'fatura' | 'balancete', formato: 'pdf' | 'html' = 'pdf') => {
+  const handleDownloadDocument = async (
+    tipo: 'condominio' | 'centro_custo' | 'fatura' | 'balancete',
+    formato: 'pdf' | 'html' = 'pdf'
+  ) => {
+    if (!selectedCompetencia) {
+      alert('Selecione uma competência para gerar documentos.');
+      return;
+    }
+
     try {
       const params = new URLSearchParams({
-        competenciaId: selectedCompetencia!.toString(),
+        competenciaId: selectedCompetencia.toString(),
         tipo,
         formato
       });
@@ -205,17 +223,38 @@ export default function Previsoes() {
               )}
             </button>
           ))}
+          {!competencias?.length && (
+            <p className="text-slate-600">Nenhuma competência encontrada para este condomínio.</p>
+          )}
         </div>
       </div>
 
       {/* Formulário de Previsão */}
       {selectedCompetencia && (
         <div className="bg-white/70 backdrop-blur-sm rounded-2xl shadow-lg border border-white/60 p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">
-            {competencia ? `Editando ${getCompetenciaText(competencia.mes, competencia.ano)}` : 'Carregando...'}
-          </h2>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+            <h2 className="text-xl font-bold text-slate-900">
+              {competencia ? `Editando ${getCompetenciaText(competencia.mes, competencia.ano)}` : 'Carregando...'}
+            </h2>
+            <div className="flex items-center gap-2">
+              <button
+                disabled={!previousCompetencia}
+                onClick={() => previousCompetencia && setSelectedCompetencia(previousCompetencia.id)}
+                className="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+              >
+                ← Mês anterior
+              </button>
+              <button
+                disabled={!nextCompetencia}
+                onClick={() => nextCompetencia && setSelectedCompetencia(nextCompetencia.id)}
+                className="px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white/80 disabled:opacity-50"
+              >
+                Próximo mês →
+              </button>
+            </div>
+          </div>
           {competencia && itens ? (
-            <PrevisaoForm
+            <PrevisaoFormAdvanced
               competencia={competencia}
               itens={itens}
               onSave={handleSaveItens}
@@ -355,7 +394,15 @@ export default function Previsoes() {
       {/* Preview dos Totais */}
       {previsaoConsolidada && (
         <div className="bg-gradient-to-r from-slate-50 to-blue-50 rounded-2xl p-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">Resumo Consolidado</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold text-slate-900">Resumo Consolidado</h2>
+            <button
+              onClick={() => setShowResumoDetalhado(!showResumoDetalhado)}
+              className="text-sm text-blue-700 hover:underline"
+            >
+              {showResumoDetalhado ? 'Ocultar detalhes' : 'Ver detalhes'}
+            </button>
+          </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center">
               <p className="text-sm text-slate-600">Somatório Despesas</p>
@@ -374,6 +421,43 @@ export default function Previsoes() {
               <p className="text-xl font-bold text-blue-600">R$ {previsaoConsolidada.taxaGeral.toFixed(2)}</p>
             </div>
           </div>
+
+          {showResumoDetalhado && (
+            <div className="mt-6 space-y-4">
+              <div className="bg-white/70 rounded-xl p-4 border border-white/60">
+                <h3 className="font-semibold text-slate-900 mb-2">Totais por Categoria</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {Object.entries(previsaoConsolidada.totaisPorCategoria).map(([categoria, total]) => (
+                    <div key={categoria} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg">
+                      <span className="text-sm text-slate-700">{categoria}</span>
+                      <span className="font-semibold text-blue-700">{formatCurrencyBR(total)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {previsaoConsolidada.centrosCusto?.length > 0 && (
+                <div className="bg-white/70 rounded-xl p-4 border border-white/60">
+                  <h3 className="font-semibold text-slate-900 mb-2">Centros de Custo</h3>
+                  <div className="space-y-2">
+                    {previsaoConsolidada.centrosCusto.map((cc) => (
+                      <div key={cc.centro.id} className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+                        <div>
+                          <p className="font-semibold text-green-900">{cc.centro.nome}</p>
+                          <p className="text-xs text-green-700">Área: {cc.centro.area_m2} m²</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm text-slate-600">Direto: {formatCurrencyBR(cc.somatorioCentro)}</p>
+                          <p className="text-sm text-slate-600">Taxa: {formatCurrencyBR(cc.proporcionalTaxa)}</p>
+                          <p className="font-bold text-green-800">Total: {formatCurrencyBR(cc.valorTotal)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 
