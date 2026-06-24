@@ -54,6 +54,34 @@ export async function apiPost<T>(url: string, body: any): Promise<T> {
   return response.json();
 }
 
+export async function apiPut<T>(url: string, body: any): Promise<T> {
+  const response = await fetch(url, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+export async function apiDelete<T>(url: string): Promise<T> {
+  const response = await fetch(url, {
+    method: 'DELETE',
+  });
+
+  if (!response.ok) {
+    throw new Error(`Erro ${response.status}: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',

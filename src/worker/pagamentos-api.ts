@@ -1,10 +1,5 @@
 import { Hono } from "hono";
-import { 
-  type PagamentoEfetuado,
-  type DespesaExtra,
-  type ComparacaoProjetadoExecutado
-} from "../shared/previsao-types";
-
+import type { Env } from './env';
 const pagamentosApp = new Hono<{ Bindings: Env }>();
 
 // Listar pagamentos de uma competência

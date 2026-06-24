@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Check, X, Clock, AlertCircle, Plus, Download, Eye } from 'lucide-react';
-import { useAPI, apiPost, formatCurrency, formatNumber } from '../hooks/useAPI';
+import { Check, X, Clock, AlertCircle, Plus } from 'lucide-react';
+import { useAPI, apiPost, formatCurrency } from '../hooks/useAPI';
 import { Competencia, PagamentoEfetuado, ComparacaoProjetadoExecutado } from '../../shared/previsao-types';
 import { motion } from 'framer-motion';
 
@@ -8,7 +8,6 @@ export default function Pagamentos() {
   const [selectedCondominio, setSelectedCondominio] = useState<number>(1);
   const [selectedCompetencia, setSelectedCompetencia] = useState<number | null>(null);
   const [selectedCentroCusto, setSelectedCentroCusto] = useState<number | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const { data: condominios } = useAPI<any[]>('/api/condominios');
   const { data: competencias } = useAPI<Competencia[]>(
@@ -27,12 +26,6 @@ export default function Pagamentos() {
   const { data: comparacao, refetch: refetchComparacao } = useAPI<any>(
     selectedCompetencia
       ? `/api/pagamentos/comparacao/${selectedCompetencia}${selectedCentroCusto ? `?centroCustoId=${selectedCentroCusto}` : ''}`
-      : ''
-  );
-
-  const { data: despesasExtras, refetch: refetchExtras } = useAPI<any[]>(
-    selectedCompetencia
-      ? `/api/pagamentos/despesas-extras/${selectedCompetencia}${selectedCentroCusto ? `?centroCustoId=${selectedCentroCusto}` : ''}`
       : ''
   );
 
